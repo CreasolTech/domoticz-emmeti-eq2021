@@ -1,9 +1,10 @@
 # domoticz-emmeti-eq2021 
+<img src="https://images.creasol.it/hotwater_eq2021.jpg" align="right" alt="EMMETI EQ2021 and EQ3021 image">
 This is a plugin for the free open-source [Domoticz home automation system](https://www.domoticz.com) that **read and write some parameters from/to the [Emmeti Mirai EQ2021 hot-water heatpump](https://emmeti.com)** by Modbus connection (RS485 serial connection).
 
 Using this plugin is possible to know the top and bottom boiler temperature, inlet/outlet air temperature, set the water temperature setpoint, ...
 
-Plugin can be modified easily to support EQ2031 hot-water heat pump, that have an additional coil for solar panels.
+Plugin can be modified easily to support EQ3021 hot-water heat pump, that have an additional coil for solar panels.
 
 Unfortunally, Modbus register documentation is very poor: if someone have an enhanced register description I'm happy to implement other features (for example activation/deactivation of the electric resistor, chiller, change operating mode, ....). This is a heat pump distributed by EMMETI, but it's made in China by some manufacturer, so it can be branded in different ways.
 
@@ -38,8 +39,9 @@ Restart Domoticz, then go to Setup -> Hardware and add the Emmeti Mirai EQ2021 h
 
 
 
-***
-Below a short list of modules, produced in Europe by Creasol,  designed for Domoticz.
+******
+
+Below a list of modules, produced in Europe by Creasol, designed for Domoticz to be reliable and optimized for very very low power consumption.
 
 ## Creasol DomBus modules
 Our industrial and home automation modules are designed to be
