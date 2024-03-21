@@ -12,7 +12,9 @@ Unfortunally, Modbus register documentation is very poor: if someone have an enh
 
 <a href="https://www.creasol.it/en/support/domotics-home-automation-and-diy/controlling-heat-pump-to-maximize-power-consumption-from-photovoltaic"><img src="https://images.creasol.it/hotwater_screenshot.webp" alt="Domoticz plugin to manage Emmeti Mirai EQ2021 hotwater heatpump" style="float: left; margin-right: 2em;" /></a><br clear="all">
 
-**This software comes with absolute no warranty. Please check the manual to verify that modbus address registers meets the plugin configuration. Also, it's written without any authorization by the supplier**
+**This software comes with absolute no warranty. No responsibility can be attributed to the authors of the software, Domoticz and Emmeti for any damage caused by the use of this software. Please check the manual to verify that modbus address registers meets the plugin configuration.**
+
+ 
 
 
 # Installation
