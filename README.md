@@ -2,7 +2,7 @@
 
 <img src="https://images.creasol.it/hotwater_eq2021.jpg" align="right" alt="EMMETI EQ2021 and EQ3021 image">
 
-This is a plugin for the free open-source [Domoticz home automation system](https://www.domoticz.com) that **read and write some parameters from/to the [Emmeti Mirai EQ2021 hot-water heatpump](https://emmeti.com)** by Modbus connection (RS485 serial connection).
+This is a plugin for the free open-source [Domoticz home automation system](https://www.domoticz.com) that **read and write some parameters from/to the [Emmeti Mirai EQ2021 hot-water heatpump](https://emmeti.com/en/products/air-conditioning/water-heater-with-heat-pump-inertial-accumulators-and-dhw-tanks-for-heat-pumps)** by Modbus connection (RS485 serial connection).
 
 Using this plugin is possible to know the top and bottom boiler temperature, inlet/outlet air temperature, set the water temperature setpoint, ...
 
