@@ -45,6 +45,7 @@ Requirements:
 """
 
 import minimalmodbus    #v2.1.1
+import time
 import Domoticz         #tested on Python 3.9.2 in Domoticz 2021.1 and 2023.1
 
 
@@ -80,14 +81,13 @@ def temp2value(temp):
 class BasePlugin:
     def __init__(self):
         self.rs485 = ""
-        return
+        self.elapsedTime=0
 
     def onStart(self):
         devicecreated = []
         Domoticz.Log("Starting Emmeti-EQ2021 plugin")
         self.pollTime=30 if Parameters['Mode3']=="" else int(Parameters['Mode3'])
         self.heartbeat=self.pollTime if self.pollTime<=30 else 30   # heartbeat must be <=30 or a warning will be written in the log
-        self.elapsedTime=0
         self.heartbeatnow=self.heartbeat        # used to track any temp modification of the heartbeat
         Domoticz.Heartbeat(self.heartbeatnow)
         self.runInterval = 1
@@ -131,46 +131,50 @@ class BasePlugin:
         errors=0
 
         startaddr=2019
-        try:    #                          addr #regs   fc  
-            values=self.rs485.read_registers(startaddr, 5,     3)
-        except:
-            Domoticz.Log(f"Error connecting to heat pump by Modbus, reading registers startaddr-2023")
-            errors+=1
-        else:
-            item="TEMP_AIR_IN"
-            value=value2temp(values[DEVS[item][DEVADDR]-startaddr]) 
-            sValue=str(value); nValue=0
-            Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
-            if Parameters["Mode6"] == 'Debug':
-                Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
+        for retry in range (1,5):  # try 5 times to access the serial port
+            try:    #                          addr #regs   fc  
+                values=self.rs485.read_registers(startaddr, 5,     3)
+            except:
+                Domoticz.Status(f"{retry}: Error connecting to heat pump by Modbus reading reg.addr={startaddr}")
+                errors+=1
+                time.sleep(0.1) #wait 0.1s before trying again
+            else:
+                Domoticz.Status(f"{retry}: Successfull reading reg.addr={startaddr}")
+                item="TEMP_AIR_IN"
+                value=value2temp(values[DEVS[item][DEVADDR]-startaddr]) 
+                sValue=str(value); nValue=0
+                Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
+                if Parameters["Mode6"] == 'Debug':
+                    Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
 
-            item="TEMP_AIR_OUT"
-            value=value2temp(values[DEVS[item][DEVADDR]-startaddr]) 
-            sValue=str(value); nValue=0
-            Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
-            if Parameters["Mode6"] == 'Debug':
-                Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
+                item="TEMP_AIR_OUT"
+                value=value2temp(values[DEVS[item][DEVADDR]-startaddr]) 
+                sValue=str(value); nValue=0
+                Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
+                if Parameters["Mode6"] == 'Debug':
+                    Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
 
-            item="TEMP_COIL"
-            value=value2temp(values[DEVS[item][DEVADDR]-startaddr]) 
-            sValue=str(value); nValue=0
-            Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
-            if Parameters["Mode6"] == 'Debug':
-                Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
+                item="TEMP_COIL"
+                value=value2temp(values[DEVS[item][DEVADDR]-startaddr]) 
+                sValue=str(value); nValue=0
+                Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
+                if Parameters["Mode6"] == 'Debug':
+                    Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
 
-            item="TEMP_WATER_BOTTOM"
-            value=value2temp(values[DEVS[item][DEVADDR]-startaddr]) 
-            sValue=str(value); nValue=0
-            Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
-            if Parameters["Mode6"] == 'Debug':
-                Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
+                item="TEMP_WATER_BOTTOM"
+                value=value2temp(values[DEVS[item][DEVADDR]-startaddr]) 
+                sValue=str(value); nValue=0
+                Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
+                if Parameters["Mode6"] == 'Debug':
+                    Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
 
-            item="TEMP_WATER_TOP"
-            value=value2temp(values[DEVS[item][DEVADDR]-startaddr]) 
-            sValue=str(value); nValue=0
-            Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
-            if Parameters["Mode6"] == 'Debug':
-                Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
+                item="TEMP_WATER_TOP"
+                value=value2temp(values[DEVS[item][DEVADDR]-startaddr]) 
+                sValue=str(value); nValue=0
+                Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
+                if Parameters["Mode6"] == 'Debug':
+                    Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
+                break
 
         startaddr=1104
         try:    #                          addr #regs   fc  
@@ -233,12 +237,16 @@ class BasePlugin:
 #        Devices[Unit].Refresh()
 
     def WriteRS485(self, Register, Value):
+        for retry in range (1,10):
             try:
                  self.rs485.write_register(Register, Value, 0, 6, False)
-
                  self.rs485.serial.close()
             except:
-                Domoticz.Log("Error writing to heat pump Modbus");
+                Domoticz.Status(f"{retry}: Error writing to heat pump Modbus reg={Register} value={Value}")
+                time.sleep(0.1)
+            else:
+                Domoticz.Status(f"{retry}: Successfully written reg={Register} value={Value}")
+                break
 
 
 global _plugin
