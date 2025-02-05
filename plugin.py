@@ -82,6 +82,9 @@ class BasePlugin:
     def __init__(self):
         self.rs485 = ""
         self.elapsedTime=0
+        self.heartbeat=30
+        self.heartbeatnow=30
+
 
     def onStart(self):
         devicecreated = []
@@ -131,13 +134,15 @@ class BasePlugin:
         errors=0
 
         startaddr=2019
-        for retry in range (1,5):  # try 5 times to access the serial port
+        for retry in range (1,3):  # try 2 times to access the serial port
+            if retry==2:
+                self.rs485.serial.exclusive = False
             try:    #                          addr #regs   fc  
                 values=self.rs485.read_registers(startaddr, 5,     3)
             except:
                 Domoticz.Status(f"{retry}: Error connecting to heat pump by Modbus reading reg.addr={startaddr}")
                 errors+=1
-                time.sleep(0.1) #wait 0.1s before trying again
+                time.sleep(0.2) #wait 0.1s before trying again
             else:
                 Domoticz.Status(f"{retry}: Successfull reading reg.addr={startaddr}")
                 item="TEMP_AIR_IN"
@@ -174,13 +179,18 @@ class BasePlugin:
                 Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
                 if Parameters["Mode6"] == 'Debug':
                     Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
+                errors=0
                 break
+
+        if errors: # Impossible to read => communication error, or Hot Water boiler is OFF
+            Domoticz.Status("Communication error, or boiler is OFF => Exit")
+            return
 
         startaddr=1104
         try:    #                          addr #regs   fc  
             values=self.rs485.read_registers(startaddr, 6,     3)
         except:
-            Domoticz.Log(f"Error connecting to heat pump by Modbus, reading registers 1104-1109")
+            Domoticz.Status(f"Error connecting to heat pump by Modbus, reading registers 1104-1109")
             errors+=1
         else:
             item="SP_HOTWATER"
@@ -205,20 +215,20 @@ class BasePlugin:
                 Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
 
 
-        self.rs485.serial.close()  #  Close that door !
+        ####self.rs485.serial.close()  #  Close that door !
         if errors:
-            Domoticz.Log(f"Increase heartbeat to avoid error in case of multiple access to the same serial port")
-            self.heartbeatnow+=1
+            self.heartbeatnow=self.heartbeat+1+(time.monotonic_ns()&7)
+            Domoticz.Log(f"Increase heartbeat to {self.heartbeatnow} to avoid concurrent access to the same serial port")
             Domoticz.Heartbeat(self.heartbeatnow)
         else: #no errors
             if self.heartbeatnow!=self.heartbeat:
-                Domoticz.Debug("Restore previous heartbeat value")
+                Domoticz.Status(f"No errors: restore heartbeat to {self.heartbeat}")
                 self.heartbeatnow=self.heartbeat
                 Domoticz.Heartbeat(self.heartbeatnow)
 
 
     def onCommand(self, Unit, Command, Level, Hue):
-        Domoticz.Log(f"Command for {Devices[Unit].Name}: Unit={Unit}, Command={Command}, Level={Level}")
+        Domoticz.Status(f"Command for {Devices[Unit].Name}: Unit={Unit}, Command={Command}, Level={Level}")
 
         for i in DEVS:  # Find the index of DEVS
             if DEVS[i][DEVUNIT]==Unit:
@@ -237,13 +247,15 @@ class BasePlugin:
 #        Devices[Unit].Refresh()
 
     def WriteRS485(self, Register, Value):
-        for retry in range (1,10):
+        for retry in range (1,4):
+            if retry==3:
+                self.rs485.serial.exclusive = False
             try:
                  self.rs485.write_register(Register, Value, 0, 6, False)
                  self.rs485.serial.close()
             except:
                 Domoticz.Status(f"{retry}: Error writing to heat pump Modbus reg={Register} value={Value}")
-                time.sleep(0.1)
+                time.sleep(0.2)
             else:
                 Domoticz.Status(f"{retry}: Successfully written reg={Register} value={Value}")
                 break
