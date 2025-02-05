@@ -13,9 +13,9 @@ Requirements:
     2.Communication module Modbus USB to RS485 converter module
 """
 """
-<plugin key="EmmetiMiraiEQ2021" name="Emmeti-Mirai EQ2021 hot water heatpump" version="1.0" author="CreasolTech" externallink="https://github.com/CreasolTech/domoticz-emmeti-eq2021">
+<plugin key="EmmetiMiraiEQ2021" name="Emmeti-Mirai EQ2021 hot water heatpump" version="1.2" author="CreasolTech" externallink="https://github.com/CreasolTech/domoticz-emmeti-eq2021">
     <description>
-        <h2>Domoticz Emmeti EQ 2021 hot water heat pump - Version 1.0</h2>
+        <h2>Domoticz Emmeti EQ 2021 hot water heat pump - Version 1.2</h2>
         Get some values from the heat pump, and permit to set the set point of hot water, to enable the heat pump on/off<br/>
         <b>THIS SOFTWARE COMES WITH ABSOLUTE NO WARRANTY: USE AT YOUR OWN RISK!</b>
     </description>
@@ -31,12 +31,6 @@ Requirements:
                 <option label="60 seconds" value="60" />
                 <option label="120 seconds" value="120" />
                 <option label="240 seconds" value="240" />
-            </options>
-        </param>
-        <param field="Mode6" label="Debug" width="75px">
-            <options>
-                <option label="True" value="Debug"/>
-                <option label="False" value="Normal"  default="true" />
             </options>
         </param>
     </params>
@@ -88,7 +82,7 @@ class BasePlugin:
 
     def onStart(self):
         devicecreated = []
-        Domoticz.Log("Starting Emmeti-EQ2021 plugin")
+        Domoticz.Status("Starting Emmeti-EQ2021 plugin")
         self.pollTime=30 if Parameters['Mode3']=="" else int(Parameters['Mode3'])
         self.heartbeat=self.pollTime if self.pollTime<=30 else 30   # heartbeat must be <=30 or a warning will be written in the log
         self.heartbeatnow=self.heartbeat        # used to track any temp modification of the heartbeat
@@ -99,7 +93,7 @@ class BasePlugin:
         if self._lang in LANGS:
             self.lang=DEVLANG+LANGS.index(self._lang)
         else:
-            Domoticz.Log(f"Language {self._lang} does not exist in dict DEVS, inside the domoticz-emmeti-mirai plugin, but you can contribute adding it ;-) Thanks!")
+            Domoticz.Error(f"Language {self._lang} does not exist in dict DEVS, inside the domoticz-emmeti-mirai plugin, but you can contribute adding it ;-) Thanks!")
             self._lang="en"
             self.lang=DEVLANG # default: english text
 
@@ -108,7 +102,7 @@ class BasePlugin:
             if DEVS[i][DEVUNIT] not in Devices:
                 Options=DEVS[i][DEVOPTIONS] if DEVS[i][DEVOPTIONS] else {}
                 Image=DEVS[i][DEVIMAGE] if DEVS[i][DEVIMAGE] else 0
-                Domoticz.Log(f"Creating device {i}, Name={DEVS[i][self.lang]}, Unit={DEVS[i][DEVUNIT]}, Type={DEVS[i][DEVTYPE]}, Subtype={DEVS[i][DEVSUBTYPE]}, Switchtype={DEVS[i][DEVSWITCHTYPE]} Options={Options}, Image={Image}")
+                Domoticz.Status(f"Creating device {i}, Name={DEVS[i][self.lang]}, Unit={DEVS[i][DEVUNIT]}, Type={DEVS[i][DEVTYPE]}, Subtype={DEVS[i][DEVSUBTYPE]}, Switchtype={DEVS[i][DEVSWITCHTYPE]} Options={Options}, Image={Image}")
                 Domoticz.Device(Name=DEVS[i][self.lang], Unit=DEVS[i][DEVUNIT], Type=DEVS[i][DEVTYPE], Subtype=DEVS[i][DEVSUBTYPE], Switchtype=DEVS[i][DEVSWITCHTYPE], Options=Options, Image=Image, Used=1).Create()
 
         self.rs485 = minimalmodbus.Instrument(Parameters["SerialPort"], int(Parameters["Mode2"]))
@@ -123,7 +117,7 @@ class BasePlugin:
         self.rs485.close_port_after_each_call = True
 
     def onStop(self):
-        Domoticz.Log("Stopping Emmeti-EQ2021 plugin")
+        Domoticz.Status("Stopping Emmeti-EQ2021 plugin")
 
     def onHeartbeat(self):
         self.elapsedTime+=self.heartbeatnow
@@ -149,36 +143,26 @@ class BasePlugin:
                 value=value2temp(values[DEVS[item][DEVADDR]-startaddr]) 
                 sValue=str(value); nValue=0
                 Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
-                if Parameters["Mode6"] == 'Debug':
-                    Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
 
                 item="TEMP_AIR_OUT"
                 value=value2temp(values[DEVS[item][DEVADDR]-startaddr]) 
                 sValue=str(value); nValue=0
                 Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
-                if Parameters["Mode6"] == 'Debug':
-                    Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
 
                 item="TEMP_COIL"
                 value=value2temp(values[DEVS[item][DEVADDR]-startaddr]) 
                 sValue=str(value); nValue=0
                 Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
-                if Parameters["Mode6"] == 'Debug':
-                    Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
 
                 item="TEMP_WATER_BOTTOM"
                 value=value2temp(values[DEVS[item][DEVADDR]-startaddr]) 
                 sValue=str(value); nValue=0
                 Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
-                if Parameters["Mode6"] == 'Debug':
-                    Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
 
                 item="TEMP_WATER_TOP"
                 value=value2temp(values[DEVS[item][DEVADDR]-startaddr]) 
                 sValue=str(value); nValue=0
                 Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
-                if Parameters["Mode6"] == 'Debug':
-                    Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
                 errors=0
                 break
 
@@ -197,28 +181,22 @@ class BasePlugin:
             value=value2temp(values[DEVS[item][DEVADDR]-startaddr]) 
             sValue=str(value); nValue=0
             Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
-            if Parameters["Mode6"] == 'Debug':
-                Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
 
             item="SP_DIFF"
             value=value2temp(values[DEVS[item][DEVADDR]-startaddr]) 
             sValue=str(value); nValue=0
             Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
-            if Parameters["Mode6"] == 'Debug':
-                Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
 
             item="SP_RESISTOR_DELAY"
             value=values[DEVS[item][DEVADDR]-startaddr]*5
             sValue=str(value); nValue=0
             Devices[DEVS[item][DEVUNIT]].Update(nValue=nValue, sValue=sValue)
-            if Parameters["Mode6"] == 'Debug':
-                Domoticz.Log(f"{item}, Addr={DEVS[item][DEVADDR]}, nValue={nValue}, sValue={sValue}")
 
 
         ####self.rs485.serial.close()  #  Close that door !
         if errors:
             self.heartbeatnow=self.heartbeat+1+(time.monotonic_ns()&7)
-            Domoticz.Log(f"Increase heartbeat to {self.heartbeatnow} to avoid concurrent access to the same serial port")
+            Domoticz.Status(f"Increase heartbeat to {self.heartbeatnow} to avoid concurrent access to the same serial port")
             Domoticz.Heartbeat(self.heartbeatnow)
         else: #no errors
             if self.heartbeatnow!=self.heartbeat:
@@ -280,19 +258,5 @@ def onCommand(Unit, Command, Level, Hue):
     global _plugin
     _plugin.onCommand(Unit, Command, Level, Hue)
 
-# Generic helper functions
-def DumpConfigToLog():
-    for x in Parameters:
-        if Parameters[x] != "":
-            Domoticz.Debug("'" + x + "':'" + str(Parameters[x]) + "'")
-            Domoticz.Debug("Device count: " + str(len(Devices)))
-    for x in Devices:
-        Domoticz.Debug("Device:           " + str(x) + " - " + str(Devices[x]))
-        Domoticz.Debug("Device ID:       '" + str(Devices[x].ID) + "'")
-        Domoticz.Debug("Device Name:     '" + Devices[x].Name + "'")
-        Domoticz.Debug("Device nValue:    " + str(Devices[x].nValue))
-        Domoticz.Debug("Device sValue:   '" + Devices[x].sValue + "'")
-        Domoticz.Debug("Device LastLevel: " + str(Devices[x].LastLevel))
-    return
 
 

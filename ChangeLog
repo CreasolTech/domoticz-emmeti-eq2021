@@ -1,5 +1,8 @@
 domoticz-emmeti-eq2021 plugin
 ChangeLog
+2025-02-05 1.2
+	Improved access to the serial device.
+	Removed debug parameter (now using Status and Errors on/off flags)
 
 2024-12-03 1.1
 	Do not increase heartbeat over 60s to avoid msg "thread seems to have ended unexpectedly"
